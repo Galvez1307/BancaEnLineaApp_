@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700">
+  <style>
+    .box { fill:#f7f7f9; stroke:#333; stroke-width:1; rx:8; }
+    .title { font: bold 14px sans-serif; fill:#111 }
+    .label { font: 12px sans-serif; fill:#222 }
+    .small { font: 11px sans-serif; fill:#444 }
+    .arrow { stroke:#666; stroke-width:2; fill:none; marker-end:url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+
+  <!-- App entry -->
+  <rect x="40" y="30" width="220" height="60" class="box"/>
+  <text x="150" y="60" text-anchor="middle" class="title">`App.tsx`</text>
+  <text x="150" y="78" text-anchor="middle" class="small">Redux + Providers + Navigation</text>
+
+  <!-- Providers -->
+  <rect x="40" y="120" width="220" height="120" class="box"/>
+  <text x="150" y="145" text-anchor="middle" class="title">Providers</text>
+  <text x="150" y="165" text-anchor="middle" class="label">`Provider` (Redux)</text>
+  <text x="150" y="183" text-anchor="middle" class="label">`AuthProvider`</text>
+  <text x="150" y="201" text-anchor="middle" class="label">`LanguageProvider`, `ThemeProvider`</text>
+
+  <!-- Navigation -->
+  <rect x="320" y="30" width="300" height="80" class="box"/>
+  <text x="470" y="60" text-anchor="middle" class="title">`NavigationContainer`</text>
+  <text x="470" y="78" text-anchor="middle" class="small">`StackNavigator`</text>
+
+  <!-- Stack navigator -->
+  <rect x="320" y="130" width="300" height="140" class="box"/>
+  <text x="470" y="155" text-anchor="middle" class="title">`StackNavigator`</text>
+  <text x="470" y="175" text-anchor="middle" class="label">Login, Home, Tabs, Transfer, AccountDetail</text>
+
+  <!-- Tabs navigator -->
+  <rect x="660" y="130" width="280" height="120" class="box"/>
+  <text x="800" y="155" text-anchor="middle" class="title">`TabsNavigator`</text>
+  <text x="800" y="175" text-anchor="middle" class="label">Home, Accounts, Settings</text>
+
+  <!-- Screens area -->
+  <rect x="320" y="300" width="620" height="320" class="box"/>
+  <text x="630" y="328" text-anchor="middle" class="title">Screens</text>
+  <text x="470" y="355" class="label">`LoginScreen.tsx`</text>
+  <text x="470" y="380" class="label">`HomeScreen.tsx`</text>
+  <text x="470" y="405" class="label">`AccountsScreen.tsx`</text>
+  <text x="470" y="430" class="label">`AccountDetailScreen.tsx`</text>
+  <text x="470" y="455" class="label">`TransferScreen.tsx`</text>
+  <text x="470" y="480" class="label">`SettingsScreen.tsx`</text>
+
+  <!-- Components -->
+  <rect x="40" y="300" width="240" height="160" class="box"/>
+  <text x="160" y="325" text-anchor="middle" class="title">`components/`</text>
+  <text x="160" y="345" text-anchor="middle" class="label">`CustomButton` `CustomInput` `AppointmentCard`</text>
+
+  <!-- Store / Data / Utils -->
+  <rect x="40" y="490" width="240" height="120" class="box"/>
+  <text x="160" y="515" text-anchor="middle" class="title">`store/`, `data/`, `utils/`</text>
+  <text x="160" y="535" text-anchor="middle" class="label">`store/index.ts` + slices</text>
+  <text x="160" y="555" text-anchor="middle" class="label">`data/accounts.ts`</text>
+  <text x="160" y="575" text-anchor="middle" class="label">`utils/translations.js`, `theme/`</text>
+
+  <!-- Assets -->
+  <rect x="320" y="640" width="120" height="40" class="box"/>
+  <text x="380" y="665" text-anchor="middle" class="small">`assets/`</text>
+
+  <!-- Arrows -->
+  <path d="M260 60 L320 60" class="arrow" />
+  <path d="M260 150 L320 150" class="arrow" />
+  <path d="M620 150 L660 150" class="arrow" />
+  <path d="M480 270 L480 300" class="arrow" />
+  <path d="M150 240 L150 300" class="arrow" />
+  <path d="M150 460 L150 490" class="arrow" />
+  <path d="M440 640 L440 620" class="arrow" />
+
+  <!-- Legend -->
+  <text x="660" y="620" class="small">Diagrama de alto nivel: flujo desde `App.tsx` → Providers → Navigation → Screens</text>
+</svg>
