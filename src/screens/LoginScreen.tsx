@@ -27,29 +27,26 @@ const LoginScreen = () => {
       ? "Ingresa tu correo"
       : "Enter your email";
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Campos incompletos", "Ingresa usuario y contraseña.");
+      Alert.alert(i18n.t("loginMissingTitle"), i18n.t("loginMissingBody"));
       return;
     }
 
-    const isOk = login(email);
+    const isOk = await login(email, password);
 
     if (isOk) {
       navigation.navigate("Tabs", { email });
     } else {
-      Alert.alert(
-        "Acceso denegado",
-        "No tienes permisos para acceder a la banca en línea."
-      );
+      Alert.alert(i18n.t("loginDeniedTitle"), i18n.t("loginDeniedBody"));
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Banco en Linea</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{i18n.t("appName")}</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Inicia sesión para ver tus cuentas
+        {i18n.t("loginTitle")}
       </Text>
 
       <CustomInput
@@ -63,12 +60,12 @@ const LoginScreen = () => {
       <CustomInput
         type="password"
         value={password}
-        placeholder="Contraseña"
+        placeholder={i18n.t("passwordPlaceholder")}
         onChange={setPassword}
         required
       />
 
-      <CustomButton title="Ingresar" onPress={handleLogin} />
+      <CustomButton title={i18n.t("login")} onPress={handleLogin} />
     </View>
   );
 };

@@ -121,7 +121,6 @@ const SettingsScreen = () => {
           </View>
         )}
 
-        {/* Perfil del cliente integrado*/}
         <View
           style={[styles.card, { backgroundColor: colors.card, marginTop: 18 }]}
         >
@@ -193,8 +192,8 @@ const SettingsScreen = () => {
             onPress={() => {
               if (!clientName || !phone || !favoriteService) {
                 Alert.alert(
-                  "Datos incompletos",
-                  "Por favor complete nombre, teléfono y servicio favorito."
+                  i18n.t("profileIncompleteTitle"),
+                  i18n.t("profileIncompleteBody")
                 );
                 return;
               }
@@ -214,7 +213,7 @@ const SettingsScreen = () => {
 
         <CustomButton
           title={i18n.t("backToPanel")}
-          onPress={() => navigation.navigate("Home")} // 🔙 regreso a HomeScreen (Stack)
+          onPress={() => navigation.navigate("Home")} // Regreso a HomeScreen (Stack)
           variant="secondary"
         />
       </View>

@@ -30,7 +30,7 @@ export const ThemeProvider = ({children}: {children: React.ReactNode}) => {
             }
         }
         loadTheme()
-    })
+    }, [])
 
     const toggleTheme = async () => {
         const newTheme = theme === 'light' ? 'dark' : 'light';

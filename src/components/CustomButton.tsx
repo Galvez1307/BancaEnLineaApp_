@@ -27,12 +27,15 @@ export default function CustomButton({
       style={[
         styles.base,
         isPrimary
-          ? { backgroundColor: colors.primary,
-           }
+          ? {
+              backgroundColor: colors.primary,
+              shadowColor: colors.shadow,
+            }
           : {
-              backgroundColor: colors.backgroundAlt,
+              backgroundColor: colors.surface,
               borderColor: colors.border,
               borderWidth: 1,
+              shadowColor: colors.shadow,
             },
       ]}
       onPress={onPress}
@@ -40,7 +43,7 @@ export default function CustomButton({
       <Text
         style={[
           styles.text,
-          { color: colors.text },
+          { color: isPrimary ? colors.onPrimary : colors.text },
         ]}
       >
         {title}
@@ -58,7 +61,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 10,
@@ -67,6 +69,5 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#F9FAFB",
   },
 });

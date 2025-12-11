@@ -1,23 +1,35 @@
 export const lightColors = {
-  background: "#F3F4F6",      // gris muy claro
-  backgroundAlt: "#E5E7EB",
+  background: "#F5F7FA",
+  backgroundAlt: "#E6EDF5",
   card: "#FFFFFF",
-  text: "#111827",
-  textSecondary: "#6B7280",
-  primary: "#e8d0dcff",         // rosa moderno
-  primarySoft: "#F9A8D4",
-  accent: "#A855F7",          // morado
-  border: "#E5E7EB",
+  surface: "#EDF5FF",
+  text: "#1B1F3B",
+  textSecondary: "#5F6685",
+  primary: "#006FBB",
+  primarySoft: "#4FB3F6",
+  accent: "#F5A524",
+  border: "#D3DBE6",
+  success: "#1F8A70",
+  danger: "#D64550",
+  muted: "#8C92AC",
+  onPrimary: "#FFFFFF",
+  shadow: "rgba(15, 23, 42, 0.15)",
 };
 
 export const darkColors = {
-  background: "#020617",      // casi negro azulado
-  backgroundAlt: "#0F172A",
-  card: "#020617",
-  text: "#F9FAFB",
-  textSecondary: "#9CA3AF",
-  primary: "#F472B6",
-  primarySoft: "#BE185D",
-  accent: "#A855F7",
-  border: "#1E293B",
+  background: "#090E1A",
+  backgroundAlt: "#121A2C",
+  card: "#1B2436",
+  surface: "#132033",
+  text: "#F1F5FF",
+  textSecondary: "#AAB4CF",
+  primary: "#4FB3F6",
+  primarySoft: "#63C5DA",
+  accent: "#F6AD55",
+  border: "#2A3447",
+  success: "#4FD1C5",
+  danger: "#F47174",
+  muted: "#7A86A5",
+  onPrimary: "#08121E",
+  shadow: "rgba(0, 0, 0, 0.45)",
 };

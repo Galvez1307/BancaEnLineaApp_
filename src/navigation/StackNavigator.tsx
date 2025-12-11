@@ -5,6 +5,7 @@ import HomeScreen from "../screens/HomeScreen";
 import TabsNavigator from "./TabsNavigator";
 import TransferScreen from "../screens/TransferScreen";
 import AccountDetailScreen from "../screens/AccountDetailScreen";
+import { i18n, useLanguage } from "../contexts/LanguageContext";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -17,6 +18,8 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function StackNavigator() {
+  const { language } = useLanguage();
+
   return (
     <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
@@ -25,12 +28,12 @@ export default function StackNavigator() {
       <Stack.Screen
         name="Transfer"
         component={TransferScreen}
-        options={{ headerShown: true, title: "Nueva transferencia" }}
+        options={{ headerShown: true, title: i18n.t("transferTitle") }}
       />
       <Stack.Screen
         name="AccountDetail"
         component={AccountDetailScreen}
-        options={{ headerShown: true, title: "Detalle de cuenta" }}
+        options={{ headerShown: true, title: i18n.t("accountDetailTitle") }}
       />
     </Stack.Navigator>
   );
