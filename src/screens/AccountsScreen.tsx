@@ -4,6 +4,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { useNavigation } from "@react-navigation/native";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Account, fetchAccounts } from "../services/bankingApi";
 
 const AccountsScreen = () => {
@@ -11,18 +12,24 @@ const AccountsScreen = () => {
   const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [accountList, setAccountList] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const data = await fetchAccounts();
+      if (!user?.id) {
+        setAccountList([]);
+        setLoading(false);
+        return;
+      }
+      const data = await fetchAccounts(user.id);
       setAccountList(data);
       setLoading(false);
     };
     load();
-  }, [language]);
+  }, [language, user?.id]);
 
   const handlePressAccount = (id: string) => {
     navigation.navigate("AccountDetail", { accountId: id });

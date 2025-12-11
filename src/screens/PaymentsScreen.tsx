@@ -4,24 +4,31 @@ import CustomButton from "../components/CustomButton";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { fetchPayments, Payment } from "../services/bankingApi";
 
 const PaymentsScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const data = await fetchPayments();
+      if (!user?.id) {
+        setPayments([]);
+        setLoading(false);
+        return;
+      }
+      const data = await fetchPayments(user.id);
       setPayments(data);
       setLoading(false);
     };
     load();
-  }, [language]);
+  }, [language, user?.id]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

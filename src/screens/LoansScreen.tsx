@@ -4,12 +4,14 @@ import CustomButton from "../components/CustomButton";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Loan, fetchLoans } from "../services/bankingApi";
 
 const LoansScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +20,14 @@ const LoansScreen = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const data = await fetchLoans();
+        if (!user?.id) {
+          if (isMounted) {
+            setLoans([]);
+            setLoading(false);
+          }
+          return;
+        }
+        const data = await fetchLoans(user.id);
         if (isMounted) {
           setLoans(data);
         }
@@ -37,7 +46,7 @@ const LoansScreen = () => {
     return () => {
       isMounted = false;
     };
-  }, [language]);
+  }, [language, user?.id]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

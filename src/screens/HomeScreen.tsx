@@ -22,12 +22,17 @@ const HomeScreen = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const data = await fetchAccounts();
+      if (!user?.id) {
+        setAccountList([]);
+        setLoading(false);
+        return;
+      }
+      const data = await fetchAccounts(user.id);
       setAccountList(data);
       setLoading(false);
     };
     load();
-  }, [language]);
+  }, [language, user?.id]);
 
   const total = accountList.reduce((acc, item) => acc + item.balance, 0);
 

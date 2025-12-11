@@ -3,24 +3,31 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator }
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Notification, fetchNotifications } from "../services/bankingApi";
 
 const NotificationsScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const data = await fetchNotifications();
+      if (!user?.id) {
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+      const data = await fetchNotifications(user.id);
       setItems(data);
       setLoading(false);
     };
     load();
-  }, [language]);
+  }, [language, user?.id]);
 
   const toggleRead = (id: string) => {
     setItems((prev) =>

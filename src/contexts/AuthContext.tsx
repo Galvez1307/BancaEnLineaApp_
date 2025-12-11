@@ -54,14 +54,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Fallback sin Supabase (modo mock) para no romper la app si no hay env vars.
     if (!supabase) {
-      const allowed = email.endsWith(".com");
-      if (allowed) {
-        setUser({ id: "mock-user", email, token: null });
-        setIsAllowed(true);
-      }
-      return allowed;
+      Alert.alert("Error", "Supabase no está configurado");
+      return false;
     }
 
     try {

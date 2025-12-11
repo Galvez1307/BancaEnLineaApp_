@@ -1,5 +1,4 @@
 import { supabase } from "./supabaseClient";
-import { accounts as mockAccounts, transactionsByAccount as mockTransactions } from "../data/accounts";
 import {
   Cuenta,
   MovimientoCuenta,
@@ -117,19 +116,23 @@ const warnSupabase = (context: string, message?: string) => {
 export const fetchAccounts = async (userId?: string): Promise<Account[]> => {
   if (!supabase) {
     warnSupabase("no configurado en fetchAccounts");
-    return mockAccounts;
+    return [];
+  }
+
+  if (!userId) {
+    return [];
   }
 
   try {
-    const query = supabase
+    const { data, error } = await supabase
       .from("cuentas")
       .select("id,usuario_id,numero_cuenta,nombre,tipo,moneda,saldo,estado,creado_en")
+      .eq("usuario_id", userId)
       .order("creado_en", { ascending: false });
-    const { data, error } = userId ? await query.eq("usuario_id", userId) : await query;
 
     if (error) {
       warnSupabase("error en fetchAccounts", error.message);
-      return mockAccounts;
+      return [];
     }
 
     if (!data) return [];
@@ -145,14 +148,14 @@ export const fetchAccounts = async (userId?: string): Promise<Account[]> => {
     }));
   } catch (e: any) {
     warnSupabase("excepcion en fetchAccounts", e?.message);
-    return mockAccounts;
+    return [];
   }
 };
 
 export const fetchAccountMovements = async (accountId: string): Promise<Transaction[]> => {
   if (!supabase) {
     warnSupabase("no configurado en fetchAccountMovements");
-    return mockTransactions[accountId] || [];
+    return [];
   }
 
   try {
@@ -164,7 +167,7 @@ export const fetchAccountMovements = async (accountId: string): Promise<Transact
 
     if (error) {
       warnSupabase("error en fetchAccountMovements", error.message);
-      return mockTransactions[accountId] || [];
+      return [];
     }
 
     if (!data) return [];
@@ -179,25 +182,26 @@ export const fetchAccountMovements = async (accountId: string): Promise<Transact
     }));
   } catch (e: any) {
     warnSupabase("excepcion en fetchAccountMovements", e?.message);
-    return mockTransactions[accountId] || [];
+    return [];
   }
 };
 
 export const fetchCards = async (userId?: string): Promise<Card[]> => {
   if (!supabase) {
     warnSupabase("no configurado en fetchCards");
-    return [
-      { id: "c1", type: "Visa Oro", brand: "Visa", last4: "1234", limit: 50000, balance: 12300 },
-      { id: "c2", type: "Mastercard Black", brand: "Mastercard", last4: "5678", limit: 120000, balance: 45800 },
-    ];
+    return [];
+  }
+
+  if (!userId) {
+    return [];
   }
 
   try {
-    const query = supabase
+    const { data, error } = await supabase
       .from("tarjetas")
       .select("id,usuario_id,cuenta_id,tipo,marca,ultimos4,limite_credito,saldo_actual,creado_en")
+      .eq("usuario_id", userId)
       .order("creado_en", { ascending: false });
-    const { data, error } = userId ? await query.eq("usuario_id", userId) : await query;
     if (error) {
       warnSupabase("error en fetchCards", error.message);
       return [];
@@ -223,18 +227,19 @@ export const fetchCards = async (userId?: string): Promise<Card[]> => {
 export const fetchLoans = async (userId?: string): Promise<Loan[]> => {
   if (!supabase) {
     warnSupabase("no configurado en fetchLoans");
-    return [
-      { id: "l1", name: "Prestamo personal", balance: 85000, installment: 3200, dueDate: "10 de cada mes" },
-      { id: "l2", name: "Prestamo hipotecario", balance: 1250000, installment: 12800, dueDate: "05 de cada mes" },
-    ];
+    return [];
+  }
+
+  if (!userId) {
+    return [];
   }
 
   try {
-    const query = supabase
+    const { data, error } = await supabase
       .from("prestamos")
       .select("id,usuario_id,cuenta_id,nombre,monto_principal,tasa_interes,plazo_meses,fecha_inicio,fecha_fin,estado,saldo_pendiente,creado_en")
+      .eq("usuario_id", userId)
       .order("creado_en", { ascending: false });
-    const { data, error } = userId ? await query.eq("usuario_id", userId) : await query;
     if (error) {
       warnSupabase("error en fetchLoans", error.message);
       return [];
@@ -259,19 +264,19 @@ export const fetchLoans = async (userId?: string): Promise<Loan[]> => {
 export const fetchPayments = async (userId?: string): Promise<Payment[]> => {
   if (!supabase) {
     warnSupabase("no configurado en fetchPayments");
-    return [
-      { id: "p1", amount: 0, type: "tarjeta", status: "pendiente", createdAt: "", description: "Pago tarjeta de credito" },
-      { id: "p2", amount: 0, type: "prestamo", status: "pendiente", createdAt: "", description: "Pago de prestamo" },
-      { id: "p3", amount: 0, type: "servicio", status: "pendiente", createdAt: "", description: "Pago de servicios" },
-    ];
+    return [];
+  }
+
+  if (!userId) {
+    return [];
   }
 
   try {
-    const query = supabase
+    const { data, error } = await supabase
       .from("pagos")
       .select("id,usuario_id,cuenta_origen_id,tipo_destino,tarjeta_destino_id,prestamo_destino_id,monto,estado,creado_en,ejecutado_en")
+      .eq("usuario_id", userId)
       .order("creado_en", { ascending: false });
-    const { data, error } = userId ? await query.eq("usuario_id", userId) : await query;
     if (error) {
       warnSupabase("error en fetchPayments", error.message);
       return [];
@@ -294,37 +299,19 @@ export const fetchPayments = async (userId?: string): Promise<Payment[]> => {
 export const fetchNotifications = async (userId?: string): Promise<Notification[]> => {
   if (!supabase) {
     warnSupabase("no configurado en fetchNotifications");
-    return [
-      {
-        id: "n1",
-        title: "Deposito recibido",
-        body: "L 5,000 a Cuenta de Ahorro",
-        date: "2025-01-20",
-        read: false,
-      },
-      {
-        id: "n2",
-        title: "Pago realizado",
-        body: "Pago tarjeta de credito L 2,500",
-        date: "2025-01-18",
-        read: false,
-      },
-      {
-        id: "n3",
-        title: "Transferencia enviada",
-        body: "L 1,200 a Juan Perez",
-        date: "2025-01-17",
-        read: false,
-      },
-    ];
+    return [];
+  }
+
+  if (!userId) {
+    return [];
   }
 
   try {
-    const query = supabase
+    const { data, error } = await supabase
       .from("notificaciones")
       .select("id,usuario_id,tipo,titulo,cuerpo,datos,leida_en,creado_en")
+      .eq("usuario_id", userId)
       .order("creado_en", { ascending: false });
-    const { data, error } = userId ? await query.eq("usuario_id", userId) : await query;
     if (error) {
       warnSupabase("error en fetchNotifications", error.message);
       return [];

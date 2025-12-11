@@ -4,6 +4,7 @@ import { useRoute } from "@react-navigation/native";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Account, Transaction, fetchAccounts, fetchAccountMovements } from "../services/bankingApi";
 
 type RouteParams = {
@@ -16,24 +17,39 @@ const AccountDetailScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
+  const { user } = useAuth();
 
   const [account, setAccount] = useState<Account | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const load = async () => {
       setLoading(true);
+      if (!user?.id) {
+        if (isMounted) {
+          setAccount(null);
+          setTransactions([]);
+          setLoading(false);
+        }
+        return;
+      }
       const [accountsData, tx] = await Promise.all([
-        fetchAccounts(),
+        fetchAccounts(user.id),
         fetchAccountMovements(accountId),
       ]);
-      setAccount(accountsData.find((a) => a.id === accountId) || null);
-      setTransactions(tx);
-      setLoading(false);
+      if (isMounted) {
+        setAccount(accountsData.find((a) => a.id === accountId) || null);
+        setTransactions(tx);
+        setLoading(false);
+      }
     };
     load();
-  }, [accountId, language]);
+    return () => {
+      isMounted = false;
+    };
+  }, [accountId, language, user?.id]);
 
   if (!account && !loading) {
     return (

@@ -4,12 +4,14 @@ import CustomButton from "../components/CustomButton";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Card, fetchCards } from "../services/bankingApi";
 
 const CardsScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +20,14 @@ const CardsScreen = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const data = await fetchCards();
+        if (!user?.id) {
+          if (isMounted) {
+            setCards([]);
+            setLoading(false);
+          }
+          return;
+        }
+        const data = await fetchCards(user.id);
         if (isMounted) {
           setCards(data);
         }
@@ -37,7 +46,7 @@ const CardsScreen = () => {
     return () => {
       isMounted = false;
     };
-  }, [language]);
+  }, [language, user?.id]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
