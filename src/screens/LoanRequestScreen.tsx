@@ -158,7 +158,9 @@ const LoanRequestScreen = () => {
         />
       )}
 
-      <Text style={[styles.label, { color: colors.text }]}>{i18n.t("loanAmount") ?? "Loan amount"}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {i18n.t("loanAmount") ?? "Loan amount"}
+      </Text>
       <CustomInput
         value={amount}
         placeholder={i18n.t("loanAmount") ?? "Monto"}
@@ -166,7 +168,9 @@ const LoanRequestScreen = () => {
         type="number"
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{i18n.t("interestRate") ?? "Interest rate"}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {i18n.t("interestRate") ?? "Interest rate"}
+      </Text>
       <CustomInput
         value={rate}
         placeholder={i18n.t("loanRate") ?? "Tasa (%)"}
@@ -175,7 +179,9 @@ const LoanRequestScreen = () => {
         editable={false}
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{i18n.t("loanTermMonths") ?? "Term (months)"}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {i18n.t("loanTermMonths") ?? "Term (months)"}
+      </Text>
       <CustomInput
         value={months}
         placeholder={i18n.t("loanTerm") ?? "Plazo (meses)"}
@@ -183,7 +189,9 @@ const LoanRequestScreen = () => {
         type="number"
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>{i18n.t("loanName") ?? "Loan name"}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {i18n.t("loanName") ?? "Loan name"}
+      </Text>
       <CustomInput
         value={name}
         placeholder={i18n.t("loanName") ?? "Nombre del préstamo"}
