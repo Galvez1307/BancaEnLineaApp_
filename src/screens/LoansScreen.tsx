@@ -1,17 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import CustomButton from "../components/CustomButton";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Loan, fetchLoans } from "../services/bankingApi";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 
 const LoansScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
   const { user } = useAuth();
+  const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,16 +51,30 @@ const LoansScreen = () => {
         }
       }
     };
-    load();
+    if (user?.id && isFocused) {
+      load();
+    }
+
     return () => {
       isMounted = false;
     };
-  }, [language, user?.id]);
+  }, [language, user?.id, isFocused]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>{i18n.t("loansTitle")}</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{i18n.t("loansSubtitle")}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>
+        {i18n.t("loansTitle")}
+      </Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        {i18n.t("loansSubtitle")}
+      </Text>
+
+      <View style={{ marginBottom: 12 }}>
+        <CustomButton
+          title={i18n.t("requestLoan") ?? "Solicitar préstamo"}
+          onPress={() => navigation.navigate("LoanRequest")}
+        />
+      </View>
 
       {loading ? (
         <ActivityIndicator color={colors.primary} />
@@ -62,16 +85,28 @@ const LoansScreen = () => {
           contentContainerStyle={{ paddingVertical: 8 }}
           renderItem={({ item }) => (
             <View style={[styles.card, { borderColor: colors.border }]}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>{item.name}</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                {item.name}
+              </Text>
               <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
                 {i18n.t("loanBalance")}: L {item.balance.toLocaleString()}
               </Text>
               <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
-                {i18n.t("loanInstallment")}: {item.installment ?? "--"} / {i18n.t("loanDueDate")}: {item.dueDate ?? "--"}
+                {i18n.t("loanInstallment")}: {item.installment ?? "--"} /{" "}
+                {i18n.t("loanDueDate")}: {item.dueDate ?? "--"}
               </Text>
               <View style={styles.actions}>
-                <CustomButton title={i18n.t("loanPay")} onPress={() => {}} />
-                <CustomButton title={i18n.t("loanDetail")} onPress={() => {}} variant="secondary" />
+                <CustomButton
+                  title={i18n.t("loanPay")}
+                  onPress={() =>
+                    navigation.navigate("LoanPayment", { loan: item })
+                  }
+                />
+                <CustomButton
+                  title={i18n.t("loanDetail")}
+                  onPress={() => {}}
+                  variant="secondary"
+                />
               </View>
             </View>
           )}

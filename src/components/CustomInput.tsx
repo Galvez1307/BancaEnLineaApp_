@@ -11,9 +11,10 @@ type Props = {
     value: string;
     placeholder: string;
     onChange: (text: string) => void;
+    editable?: boolean;
 };
 
-export default function CustomInput({ type = "text", required, value, placeholder, onChange }: Props) {
+export default function CustomInput({ type = "text", required, value, placeholder, onChange, editable = true }: Props) {
   const [isSecureText, setIsSecureText] = useState(type === "password");
   const isPasswordField = type === "password";
   const { language } = useLanguage();
@@ -52,6 +53,7 @@ export default function CustomInput({ type = "text", required, value, placeholde
                     placeholderTextColor={colors.muted}
                     value={value}
                     onChangeText={onChange}
+                    editable={editable}
                     onBlur={() => {}}
                     secureTextEntry={isPasswordField && isSecureText}
                     style={[styles.input, { color: colors.text }]}

@@ -1,12 +1,18 @@
 // src/screens/HomeScreen.tsx
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
-import CustomButton from "../components/CustomButton";
 import { fetchAccounts, Account } from "../services/bankingApi";
 
 const HomeScreen = () => {
@@ -15,30 +21,28 @@ const HomeScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const { language } = useLanguage();
+  const isFocused = useIsFocused();
 
   const [accountList, setAccountList] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?.id || !isFocused) return;
+
     const load = async () => {
-      setLoading(true);
-      if (!user?.id) {
-        setAccountList([]);
+      try {
+        setLoading(true);
+        const data = await fetchAccounts(user.id);
+        setAccountList(data);
+      } finally {
         setLoading(false);
-        return;
       }
-      const data = await fetchAccounts(user.id);
-      setAccountList(data);
-      setLoading(false);
     };
+
     load();
-  }, [language, user?.id]);
+  }, [user, language, isFocused]);
 
   const total = accountList.reduce((acc, item) => acc + item.balance, 0);
-
-  const handleTransfer = () => {
-    navigation.navigate("Transfer");
-  };
 
   const handleGoToAccount = (id: string) => {
     navigation.navigate("AccountDetail", { accountId: id });
@@ -75,8 +79,6 @@ const HomeScreen = () => {
         </Text>
       </View>
 
-      <CustomButton title={i18n.t("makeTransfer")} onPress={handleTransfer} />
-
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
         {i18n.t("yourAccounts")}
       </Text>
@@ -86,6 +88,7 @@ const HomeScreen = () => {
         <FlatList
           data={accountList}
           keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingBottom: 140 }}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[
@@ -101,7 +104,9 @@ const HomeScreen = () => {
               <Text style={[styles.accountName, { color: colors.text }]}>
                 {item.name}
               </Text>
-              <Text style={[styles.accountNumber, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.accountNumber, { color: colors.textSecondary }]}
+              >
                 {item.number}
               </Text>
               <Text style={[styles.accountBalance, { color: colors.text }]}>

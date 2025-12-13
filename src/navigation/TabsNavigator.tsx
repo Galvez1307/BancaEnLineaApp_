@@ -1,29 +1,62 @@
 import React from "react";
+import { View, TouchableOpacity } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/HomeScreen";
 import AccountsScreen from "../screens/AccountsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import PaymentsScreen from "../screens/PaymentsScreen";
-import CardsScreen from "../screens/CardsScreen";
-import LoansScreen from "../screens/LoansScreen";
+import QuickActionsTabButton from "../components/QuickActionsTabButton";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import { i18n } from "../contexts/LanguageContext";
 import { useLanguage } from "../contexts/LanguageContext";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { getThemeColors } from "../utils/theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import NotificationBell from "../components/NotificationBell";
 
 export type TabsParamList = {
   Home: undefined;
   Accounts: undefined;
-  Payments: undefined;
-  Cards: undefined;
-  Loans: undefined;
+  QuickActions: undefined;
   Notifications: undefined;
   Settings: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabsParamList>();
+
+const HeaderActions: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      const rootNavigation = navigation?.getParent?.() ?? navigation;
+      rootNavigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+    } catch {
+      // ignore logout errors
+    }
+  };
+
+  const iconColor = (colors as any).icon ?? colors.text;
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <NotificationBell onPress={() => navigation.navigate("Notifications")} />
+      <TouchableOpacity
+        onPress={handleLogout}
+        style={{ paddingHorizontal: 8 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Ionicons name="log-out-outline" size={22} color={iconColor} />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const TabsNavigator = () => {
   const { theme } = useTheme();
@@ -32,14 +65,18 @@ const TabsNavigator = () => {
 
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
+      screenOptions={({ navigation }) => ({
+        headerShown: true,
+        headerTitleStyle: { color: colors.text },
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
+        headerRight: () => <HeaderActions navigation={navigation} />,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
           backgroundColor: colors.card,
         },
-      }}
+      })}
     >
       <Tab.Screen
         name="Home"
@@ -66,33 +103,12 @@ const TabsNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Payments"
-        component={PaymentsScreen}
+        name="QuickActions"
+        component={() => null}
         options={{
-          title: i18n.t("paymentsTab"),
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="payment" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Cards"
-        component={CardsScreen}
-        options={{
-          title: i18n.t("cardsTab"),
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="credit-card" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Loans"
-        component={LoansScreen}
-        options={{
-          title: i18n.t("loansTab"),
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="attach-money" size={size} color={color} />
-          ),
+          title: "",
+          tabBarIcon: () => null,
+          tabBarButton: (props) => <QuickActionsTabButton {...props} />,
         }}
       />
       <Tab.Screen

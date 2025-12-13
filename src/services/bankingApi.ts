@@ -5,7 +5,7 @@ import {
   Tarjeta as TarjetaEntity,
   Prestamo as PrestamoEntity,
   Pago as PagoEntity,
-  Notificacion,
+  Notificacion as NotificacionEntity,
 } from "../types/supabaseEntities";
 
 export type Account = {
@@ -38,6 +38,7 @@ export type Loan = {
   balance: number;
   installment?: number | null;
   dueDate?: string | null;
+  cuentaId?: string | null;
 };
 
 export type Payment = {
@@ -58,276 +59,388 @@ export type Notification = {
   read?: boolean;
 };
 
-type CuentaRow = Pick<
-  Cuenta,
-  "id" | "usuario_id" | "numero_cuenta" | "nombre" | "tipo" | "moneda" | "saldo" | "estado" | "creado_en"
->;
-type MovimientoCuentaRow = Pick<
-  MovimientoCuenta,
-  | "id"
-  | "cuenta_id"
-  | "tipo"
-  | "monto"
-  | "descripcion"
-  | "categoria"
-  | "saldo_despues"
-  | "transferencia_relacionada_id"
-  | "creado_en"
->;
-type TarjetaRow = Pick<
-  TarjetaEntity,
-  "id" | "usuario_id" | "cuenta_id" | "tipo" | "marca" | "ultimos4" | "limite_credito" | "saldo_actual" | "creado_en"
->;
-type PrestamoRow = Pick<
-  PrestamoEntity,
-  | "id"
-  | "usuario_id"
-  | "cuenta_id"
-  | "nombre"
-  | "monto_principal"
-  | "tasa_interes"
-  | "plazo_meses"
-  | "fecha_inicio"
-  | "fecha_fin"
-  | "estado"
-  | "saldo_pendiente"
-  | "creado_en"
->;
-type PagoRow = Pick<
-  PagoEntity,
-  | "id"
-  | "usuario_id"
-  | "cuenta_origen_id"
-  | "tipo_destino"
-  | "tarjeta_destino_id"
-  | "prestamo_destino_id"
-  | "monto"
-  | "estado"
-  | "creado_en"
-  | "ejecutado_en"
->;
-type NotificacionRow = Pick<Notificacion, "id" | "usuario_id" | "tipo" | "titulo" | "cuerpo" | "datos" | "leida_en" | "creado_en">;
-
-const warnSupabase = (context: string, message?: string) => {
-  const detail = message ? `: ${message}` : "";
-  console.warn(`Supabase ${context}${detail}`);
+const ensureSupabase = (context: string) => {
+  if (!supabase) {
+    throw new Error(
+      `Supabase no está configurado (${context}). Revisa el archivo .env.`
+    );
+  }
 };
 
+/**
+ * CUENTAS
+ */
 export const fetchAccounts = async (userId?: string): Promise<Account[]> => {
-  if (!supabase) {
-    warnSupabase("no configurado en fetchAccounts");
-    return [];
+  ensureSupabase("fetchAccounts");
+
+  const query = supabase!
+    .from("cuentas")
+    .select(
+      "id,usuario_id,numero_cuenta,nombre,tipo,moneda,saldo,estado,creado_en"
+    )
+    .order("creado_en", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("usuario_id", userId)
+    : await query;
+
+  if (error) {
+    console.error("Error en fetchAccounts:", error.message);
+    throw error;
   }
 
-  if (!userId) {
-    return [];
-  }
+  if (!data) return [];
 
-  try {
-    const { data, error } = await supabase
-      .from("cuentas")
-      .select("id,usuario_id,numero_cuenta,nombre,tipo,moneda,saldo,estado,creado_en")
-      .eq("usuario_id", userId)
-      .order("creado_en", { ascending: false });
+  const rows = data as Cuenta[];
 
-    if (error) {
-      warnSupabase("error en fetchAccounts", error.message);
-      return [];
-    }
-
-    if (!data) return [];
-
-    const rows = data as CuentaRow[];
-
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.nombre,
-      number: row.numero_cuenta,
-      balance: Number(row.saldo ?? 0),
-      currency: row.moneda || "HNL",
-    }));
-  } catch (e: any) {
-    warnSupabase("excepcion en fetchAccounts", e?.message);
-    return [];
-  }
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.nombre,
+    number: row.numero_cuenta,
+    balance: Number(row.saldo ?? 0),
+    currency: row.moneda || "HNL",
+  }));
 };
 
-export const fetchAccountMovements = async (accountId: string): Promise<Transaction[]> => {
-  if (!supabase) {
-    warnSupabase("no configurado en fetchAccountMovements");
-    return [];
+/**
+ * MOVIMIENTOS DE CUENTA
+ */
+export const fetchAccountMovements = async (
+  accountId: string
+): Promise<Transaction[]> => {
+  ensureSupabase("fetchAccountMovements");
+
+  const { data, error } = await supabase!
+    .from("movimientos_cuenta")
+    .select(
+      "id,cuenta_id,tipo,monto,descripcion,categoria,saldo_despues,transferencia_relacionada_id,creado_en"
+    )
+    .eq("cuenta_id", accountId)
+    .order("creado_en", { ascending: false });
+
+  if (error) {
+    console.error("Error en fetchAccountMovements:", error.message);
+    throw error;
   }
 
-  try {
-    const { data, error } = await supabase
-      .from("movimientos_cuenta")
-      .select("id,cuenta_id,tipo,monto,descripcion,categoria,saldo_despues,transferencia_relacionada_id,creado_en")
-      .eq("cuenta_id", accountId)
-      .order("creado_en", { ascending: false });
+  if (!data) return [];
 
-    if (error) {
-      warnSupabase("error en fetchAccountMovements", error.message);
-      return [];
-    }
+  const rows = data as MovimientoCuenta[];
 
-    if (!data) return [];
-
-    const rows = data as MovimientoCuentaRow[];
-
-    return rows.map((row) => ({
-      id: String(row.id),
-      date: row.creado_en,
-      description: row.descripcion ?? "",
-      amount: row.tipo === "debito" ? -Number(row.monto ?? 0) : Number(row.monto ?? 0),
-    }));
-  } catch (e: any) {
-    warnSupabase("excepcion en fetchAccountMovements", e?.message);
-    return [];
-  }
+  return rows.map((row) => ({
+    id: String(row.id),
+    date: row.creado_en,
+    description: row.descripcion ?? "",
+    amount:
+      row.tipo === "debito" ? -Number(row.monto ?? 0) : Number(row.monto ?? 0),
+  }));
 };
 
+/**
+ * TARJETAS
+ */
 export const fetchCards = async (userId?: string): Promise<Card[]> => {
-  if (!supabase) {
-    warnSupabase("no configurado en fetchCards");
-    return [];
+  ensureSupabase("fetchCards");
+
+  const query = supabase!
+    .from("tarjetas")
+    .select(
+      "id,usuario_id,cuenta_id,tipo,marca,ultimos4,limite_credito,saldo_actual,creado_en"
+    )
+    .order("creado_en", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("usuario_id", userId)
+    : await query;
+
+  if (error) {
+    console.error("Error en fetchCards:", error.message);
+    throw error;
   }
 
-  if (!userId) {
-    return [];
-  }
+  if (!data) return [];
 
-  try {
-    const { data, error } = await supabase
-      .from("tarjetas")
-      .select("id,usuario_id,cuenta_id,tipo,marca,ultimos4,limite_credito,saldo_actual,creado_en")
-      .eq("usuario_id", userId)
-      .order("creado_en", { ascending: false });
-    if (error) {
-      warnSupabase("error en fetchCards", error.message);
-      return [];
-    }
-    if (!data) {
-      return [];
-    }
-    const rows = data as TarjetaRow[];
-    return rows.map((row) => ({
-      id: row.id,
-      type: row.tipo,
-      brand: row.marca,
-      last4: row.ultimos4,
-      limit: row.limite_credito != null ? Number(row.limite_credito) : null,
-      balance: row.saldo_actual != null ? Number(row.saldo_actual) : null,
-    }));
-  } catch (e: any) {
-    warnSupabase("excepcion en fetchCards", e?.message);
-    return [];
-  }
+  const rows = data as TarjetaEntity[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    type: row.tipo,
+    brand: row.marca,
+    last4: row.ultimos4,
+    limit: row.limite_credito != null ? Number(row.limite_credito) : null,
+    balance: row.saldo_actual != null ? Number(row.saldo_actual) : null,
+  }));
 };
 
+/**
+ * PRÉSTAMOS
+ */
 export const fetchLoans = async (userId?: string): Promise<Loan[]> => {
-  if (!supabase) {
-    warnSupabase("no configurado en fetchLoans");
-    return [];
+  ensureSupabase("fetchLoans");
+
+  const query = supabase!
+    .from("prestamos")
+    .select(
+      "id,usuario_id,cuenta_id,nombre,monto_principal,tasa_interes,plazo_meses,fecha_inicio,fecha_fin,estado,saldo_pendiente,creado_en"
+    )
+    .order("creado_en", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("usuario_id", userId)
+    : await query;
+
+  if (error) {
+    console.error("Error en fetchLoans:", error.message);
+    throw error;
   }
 
-  if (!userId) {
-    return [];
-  }
+  if (!data) return [];
 
-  try {
-    const { data, error } = await supabase
-      .from("prestamos")
-      .select("id,usuario_id,cuenta_id,nombre,monto_principal,tasa_interes,plazo_meses,fecha_inicio,fecha_fin,estado,saldo_pendiente,creado_en")
-      .eq("usuario_id", userId)
-      .order("creado_en", { ascending: false });
-    if (error) {
-      warnSupabase("error en fetchLoans", error.message);
-      return [];
-    }
-    if (!data) {
-      return [];
-    }
-    const rows = data as PrestamoRow[];
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.nombre,
-      balance: Number(row.saldo_pendiente ?? 0),
-      installment: null,
-      dueDate: row.fecha_fin ?? null,
-    }));
-  } catch (e: any) {
-    warnSupabase("excepcion en fetchLoans", e?.message);
-    return [];
-  }
+  const rows = data as PrestamoEntity[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.nombre,
+    balance: Number(row.saldo_pendiente ?? 0),
+    installment: null,
+    dueDate: row.fecha_fin ?? null,
+    cuentaId: row.cuenta_id ?? null,
+  }));
 };
 
+export type LoanRequestParams = {
+  usuarioId: string;
+  cuentaDepositoId: string;
+  nombre: string;
+  montoPrincipal: number;
+  tasaInteres: number;
+  plazoMeses: number;
+};
+
+export type LoanPaymentParams = {
+  usuarioId: string;
+  prestamoId: string;
+  cuentaOrigenId: string;
+  montoPrincipal: number;
+  montoInteres?: number;
+};
+
+export const requestLoan = async (params: LoanRequestParams) => {
+  const {
+    usuarioId,
+    cuentaDepositoId,
+    nombre,
+    montoPrincipal,
+    tasaInteres,
+    plazoMeses,
+  } = params;
+
+  ensureSupabase("requestLoan");
+
+  if (!usuarioId || !cuentaDepositoId) {
+    throw new Error("Faltan datos del usuario o de la cuenta.");
+  }
+  if (!montoPrincipal || montoPrincipal <= 0) {
+    throw new Error("El monto del préstamo debe ser mayor a 0.");
+  }
+  if (!plazoMeses || plazoMeses <= 0) {
+    throw new Error("El plazo debe ser mayor a 0.");
+  }
+
+  const { data, error } = await supabase!.rpc("solicitar_prestamo", {
+    p_usuario_id: usuarioId,
+    p_cuenta_deposito: cuentaDepositoId,
+    p_nombre: nombre || "Préstamo personal",
+    p_monto_principal: montoPrincipal,
+    p_tasa_interes: tasaInteres,
+    p_plazo_meses: plazoMeses,
+  });
+
+  if (error) {
+    console.error("Error en requestLoan:", error.message);
+    throw error;
+  }
+
+  return (data as any)?.[0] ?? null;
+};
+
+export const payLoan = async (params: LoanPaymentParams) => {
+  const { usuarioId, prestamoId, cuentaOrigenId, montoPrincipal } = params;
+  const montoInteres = params.montoInteres ?? 0;
+
+  ensureSupabase("payLoan");
+
+  if (!usuarioId || !prestamoId || !cuentaOrigenId) {
+    throw new Error("Faltan datos del pago de préstamo.");
+  }
+  if (!montoPrincipal || montoPrincipal <= 0) {
+    throw new Error("El monto del pago debe ser mayor a 0.");
+  }
+
+  const { data, error } = await supabase!.rpc("pagar_prestamo", {
+    p_usuario_id: usuarioId,
+    p_prestamo_id: prestamoId,
+    p_cuenta_origen_id: cuentaOrigenId,
+    p_monto_principal: montoPrincipal,
+    p_monto_interes: montoInteres,
+  });
+
+  if (error) {
+    console.error("Error en payLoan:", error.message);
+    throw error;
+  }
+
+  return (data as any)?.[0] ?? null;
+};
+
+/**
+ * PAGOS
+ */
 export const fetchPayments = async (userId?: string): Promise<Payment[]> => {
-  if (!supabase) {
-    warnSupabase("no configurado en fetchPayments");
-    return [];
+  ensureSupabase("fetchPayments");
+
+  const query = supabase!
+    .from("pagos")
+    .select(
+      "id,usuario_id,cuenta_origen_id,tipo_destino,tarjeta_destino_id,prestamo_destino_id,monto,estado,creado_en,ejecutado_en"
+    )
+    .order("creado_en", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("usuario_id", userId)
+    : await query;
+
+  if (error) {
+    console.error("Error en fetchPayments:", error.message);
+    throw error;
   }
 
-  if (!userId) {
-    return [];
+  if (!data) return [];
+
+  const rows = data as PagoEntity[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    amount: Number(row.monto ?? 0),
+    type: row.tipo_destino ?? "desconocido",
+    status: row.estado ?? "pendiente",
+    createdAt: row.creado_en,
+  }));
+};
+
+/**
+ * NOTIFICACIONES
+ */
+export const fetchNotifications = async (
+  userId?: string
+): Promise<Notification[]> => {
+  ensureSupabase("fetchNotifications");
+
+  const query = supabase!
+    .from("notificaciones")
+    .select("id,usuario_id,tipo,titulo,cuerpo,datos,leida_en,creado_en")
+    .order("creado_en", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("usuario_id", userId)
+    : await query;
+
+  if (error) {
+    console.error("Error en fetchNotifications:", error.message);
+    throw error;
+  }
+
+  if (!data) return [];
+
+  const rows = data as NotificacionEntity[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.titulo,
+    body: row.cuerpo,
+    date: row.creado_en,
+    type: row.tipo,
+    read: Boolean(row.leida_en),
+  }));
+};
+
+/**
+ * REALIZAR TRANSFERENCIA (RPC)
+ */
+export const makeTransfer = async (params: {
+  usuarioId: string;
+  cuentaOrigenId: string;
+  cuentaDestinoId: string;
+  monto: number;
+  concepto?: string;
+}) => {
+  ensureSupabase("makeTransfer");
+
+  const { usuarioId, cuentaOrigenId, cuentaDestinoId, monto, concepto } =
+    params;
+
+  // Validaciones cliente
+  if (!usuarioId || !usuarioId.trim()) {
+    throw new Error("usuarioId es requerido");
+  }
+  if (!cuentaOrigenId || !cuentaOrigenId.trim()) {
+    throw new Error("cuentaOrigenId es requerido");
+  }
+  if (!cuentaDestinoId || !cuentaDestinoId.trim()) {
+    throw new Error("cuentaDestinoId es requerido");
+  }
+  if (cuentaOrigenId === cuentaDestinoId) {
+    throw new Error("La cuenta origen y destino no pueden ser la misma");
+  }
+  if (typeof monto !== "number" || Number.isNaN(monto) || monto <= 0) {
+    throw new Error("El monto debe ser un número mayor a 0");
   }
 
   try {
-    const { data, error } = await supabase
-      .from("pagos")
-      .select("id,usuario_id,cuenta_origen_id,tipo_destino,tarjeta_destino_id,prestamo_destino_id,monto,estado,creado_en,ejecutado_en")
-      .eq("usuario_id", userId)
-      .order("creado_en", { ascending: false });
+    const { data, error } = await supabase!.rpc("realizar_transferencia", {
+      p_usuario_id: usuarioId,
+      p_cuenta_origen: cuentaOrigenId,
+      p_cuenta_destino: cuentaDestinoId,
+      p_monto: monto,
+      p_concepto: concepto ?? null,
+    });
+
     if (error) {
-      warnSupabase("error en fetchPayments", error.message);
-      return [];
+      console.error("Error en makeTransfer:", error.message);
+      throw error;
     }
-    if (!data) return [];
-    const rows = data as PagoRow[];
-    return rows.map((row) => ({
-      id: row.id,
-      amount: Number(row.monto ?? 0),
-      type: row.tipo_destino ?? "desconocido",
-      status: row.estado ?? "pendiente",
-      createdAt: row.creado_en,
-    }));
-  } catch (e: any) {
-    warnSupabase("excepcion en fetchPayments", e?.message);
-    return [];
+
+    // Supabase RPC puede devolver un array de rows
+    return (data as any)?.[0] ?? null;
+  } catch (err: any) {
+    console.error("Exception en makeTransfer:", err?.message ?? err);
+    throw err;
   }
 };
 
-export const fetchNotifications = async (userId?: string): Promise<Notification[]> => {
-  if (!supabase) {
-    warnSupabase("no configurado en fetchNotifications");
-    return [];
+export const getAccountIdByNumber = async (
+  accountNumber: string
+): Promise<string> => {
+  ensureSupabase("getAccountIdByNumber");
+
+  const trimmed = accountNumber?.trim?.();
+  if (!trimmed) {
+    throw new Error("El número de cuenta destino es requerido.");
   }
 
-  if (!userId) {
-    return [];
+  const { data, error } = await supabase!
+    .from("cuentas")
+    .select("id")
+    .eq("numero_cuenta", trimmed)
+    .single();
+
+  if (error || !data) {
+    console.error(
+      "Error en getAccountIdByNumber:",
+      error?.message ?? "no data"
+    );
+    throw new Error("Cuenta destino no encontrada.");
   }
 
-  try {
-    const { data, error } = await supabase
-      .from("notificaciones")
-      .select("id,usuario_id,tipo,titulo,cuerpo,datos,leida_en,creado_en")
-      .eq("usuario_id", userId)
-      .order("creado_en", { ascending: false });
-    if (error) {
-      warnSupabase("error en fetchNotifications", error.message);
-      return [];
-    }
-    if (!data) return [];
-    const rows = data as NotificacionRow[];
-    return rows.map((row) => ({
-      id: row.id,
-      title: row.titulo,
-      body: row.cuerpo,
-      date: row.creado_en,
-      type: row.tipo,
-      read: Boolean(row.leida_en),
-    }));
-  } catch (e: any) {
-    warnSupabase("excepcion en fetchNotifications", e?.message);
-    return [];
-  }
+  return data.id as string;
 };
