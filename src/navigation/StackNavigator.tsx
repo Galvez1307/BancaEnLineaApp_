@@ -5,6 +5,7 @@ import HomeScreen from "../screens/HomeScreen";
 import TabsNavigator from "./TabsNavigator";
 import TransferScreen from "../screens/TransferScreen";
 import AccountDetailScreen from "../screens/AccountDetailScreen";
+import NewAccountScreen from "../screens/NewAccountScreen";
 import PaymentsScreen from "../screens/PaymentsScreen";
 import CardsScreen from "../screens/CardsScreen";
 import LoansScreen from "../screens/LoansScreen";
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   LoanRequest: undefined;
   LoanPayment: { loan: any };
   AccountDetail: { accountId: string };
+  NewAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -78,6 +80,14 @@ export default function StackNavigator() {
         name="AccountDetail"
         component={AccountDetailScreen}
         options={{ headerShown: true, title: i18n.t("accountDetailTitle") }}
+      />
+      <Stack.Screen
+        name="NewAccount"
+        component={NewAccountScreen}
+        options={{
+          headerShown: true,
+          title: i18n.t("newAccount") ?? "Nueva cuenta",
+        }}
       />
     </Stack.Navigator>
   );

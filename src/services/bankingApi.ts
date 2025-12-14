@@ -102,6 +102,47 @@ export const fetchAccounts = async (userId?: string): Promise<Account[]> => {
   }));
 };
 
+export type CreateAccountParams = {
+  usuarioId: string;
+  nombre: string;
+  tipo: "ahorros" | "corriente";
+  moneda?: string;
+};
+
+const generateAccountNumber = () => {
+  const timePart = Date.now().toString().slice(-6);
+  const randPart = Math.floor(Math.random() * 900000 + 100000).toString();
+  return `000${timePart}${randPart.slice(0, 3)}`;
+};
+
+export const createAccount = async (params: CreateAccountParams) => {
+  ensureSupabase("createAccount");
+
+  const { usuarioId, nombre, tipo, moneda } = params;
+  const numeroCuenta = generateAccountNumber();
+
+  const { data, error } = await supabase!
+    .from("cuentas")
+    .insert({
+      usuario_id: usuarioId,
+      numero_cuenta: numeroCuenta,
+      nombre,
+      tipo,
+      moneda: moneda ?? "HNL",
+      saldo: 0,
+      estado: "activa",
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Error createAccount:", error.message);
+    throw error;
+  }
+
+  return data;
+};
+
 /**
  * MOVIMIENTOS DE CUENTA
  */

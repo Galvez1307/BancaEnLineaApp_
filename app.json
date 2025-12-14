@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Banca en L\u00ednea",
+    "name": "Banca en Línea",
     "slug": "banca-en-linea",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -25,6 +25,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2749460a-fd75-442a-8ee4-df34e98fdcba"
+      }
     }
   }
 }

@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { Account, fetchAccounts } from "../services/bankingApi";
+import CustomButton from "../components/CustomButton";
 
 const AccountsScreen = () => {
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const { language } = useLanguage();
   const { user } = useAuth();
   const [accountList, setAccountList] = useState<Account[]>([]);
@@ -28,8 +37,10 @@ const AccountsScreen = () => {
       setAccountList(data);
       setLoading(false);
     };
-    load();
-  }, [language, user?.id]);
+    if (isFocused) {
+      load();
+    }
+  }, [language, user?.id, isFocused]);
 
   const handlePressAccount = (id: string) => {
     navigation.navigate("AccountDetail", { accountId: id });
@@ -37,7 +48,14 @@ const AccountsScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>{i18n.t("yourAccounts")}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>
+        {i18n.t("yourAccounts")}
+      </Text>
+
+      <CustomButton
+        title={i18n.t("openNewAccount") ?? "Abrir nueva cuenta"}
+        onPress={() => navigation.navigate("NewAccount")}
+      />
 
       {loading ? (
         <ActivityIndicator color={colors.primary} />
@@ -53,7 +71,9 @@ const AccountsScreen = () => {
               <Text style={[styles.accountName, { color: colors.text }]}>
                 {item.name}
               </Text>
-              <Text style={[styles.accountNumber, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.accountNumber, { color: colors.textSecondary }]}
+              >
                 {item.number}
               </Text>
               <Text style={[styles.balance, { color: colors.text }]}>

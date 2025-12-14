@@ -1,36 +1,71 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Switch,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, Switch, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { getThemeColors } from "../utils/theme";
 import { i18n, useLanguage } from "../contexts/LanguageContext";
 import CustomButton from "../components/CustomButton";
 import { useNavigation } from "@react-navigation/native";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setClientProfile } from "../store/clientSlice";
+import CustomInput from "../components/CustomInput";
+import { fetchRate } from "../services/exchangeApi";
 
 const SettingsScreen = () => {
   const { theme, toggleTheme } = useTheme();
   const navigation = useNavigation<any>();
   const colors = getThemeColors(theme);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const { language, changeLanguage } = useLanguage();
-  const dispatch = useAppDispatch();
-  const savedProfile = useAppSelector((state) => state.client);
 
-  const [clientName, setClientName] = useState(savedProfile.name);
-  const [phone, setPhone] = useState(savedProfile.phone);
-  const [favoriteService, setFavoriteService] = useState(
-    savedProfile.favoriteService
-  );
-  const [notes, setNotes] = useState(savedProfile.notes);
+  const DEFAULT_RATE = 24.5;
+  const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_RATE);
+  const [isFetchingRate, setIsFetchingRate] = useState<boolean>(false);
+  const [usdAmount, setUsdAmount] = useState("");
+  const [hnlAmount, setHnlAmount] = useState("");
+
+  const handleUsdChange = (value: string) => {
+    setUsdAmount(value);
+    const n = Number(value.replace(",", "."));
+    if (!isNaN(n)) {
+      setHnlAmount((n * exchangeRate).toFixed(2));
+    } else {
+      setHnlAmount("");
+    }
+  };
+
+  const handleHnlChange = (value: string) => {
+    setHnlAmount(value);
+    const n = Number(value.replace(",", "."));
+    if (!isNaN(n) && exchangeRate > 0) {
+      setUsdAmount((n / exchangeRate).toFixed(2));
+    } else {
+      setUsdAmount("");
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const loadRate = async () => {
+      setIsFetchingRate(true);
+      try {
+        const r = await fetchRate("USD", "HNL");
+        if (mounted && typeof r === "number") {
+          setExchangeRate(r);
+          console.log("Fetched exchange rate USD->HNL:", r);
+        } else {
+          console.log(
+            "Exchange rate not available; keeping default:",
+            DEFAULT_RATE
+          );
+        }
+      } catch (err) {
+        console.log("Could not fetch exchange rate, keeping default:", err);
+      } finally {
+        if (mounted) setIsFetchingRate(false);
+      }
+    };
+    loadRate();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -92,125 +127,41 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => setShowAdvanced(!showAdvanced)}>
-          <Text style={[styles.advancedToggle, { color: colors.text }]}>
-            {i18n.t("advanced")}
+        {/* Exchange rate card */}
+        <View style={[styles.exchangeCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {i18n.t("exchangeRate") ?? "Tasa de cambio"}
           </Text>
-        </TouchableOpacity>
+          <Text
+            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
+          >
+            USD ↔ HNL
+          </Text>
 
-        {showAdvanced && (
-          <View style={styles.advancedSection}>
-            <View style={styles.row}>
-              <Text style={[styles.label, { color: colors.text }]}>
-                {i18n.t("notifications")}
-              </Text>
-              <Switch
-                value={false}
-                onValueChange={() => {}}
-                thumbColor={colors.primary}
-              />
-            </View>
-            <View style={styles.row}>
-              <Text style={[styles.label, { color: colors.text }]}>
-                {i18n.t("systemLanguage")}
-              </Text>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                {language.toUpperCase()}
-              </Text>
-            </View>
+          <Text
+            style={[styles.rateText, { color: colors.text }]}
+          >{`1 USD = ${exchangeRate.toFixed(2)} HNL`}</Text>
+
+          <View style={styles.exchangeRow}>
+            <Text style={[styles.label, { color: colors.text }]}>USD</Text>
+            <CustomInput
+              value={usdAmount}
+              onChange={handleUsdChange}
+              type="number"
+              placeholder="0.00"
+            />
           </View>
-        )}
 
-        <View
-          style={[styles.card, { backgroundColor: colors.card, marginTop: 18 }]}
-        >
-          <Text style={[styles.titleSmall, { color: colors.text }]}>
-            {i18n.t("clientProfile")}
-          </Text>
-
-          <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {i18n.t("clientName")}
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              { color: colors.text, borderColor: colors.border },
-            ]}
-            value={clientName}
-            onChangeText={setClientName}
-            placeholder={i18n.t("clientName")}
-            placeholderTextColor="rgba(148,163,184,0.9)"
-          />
-
-          <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {i18n.t("phoneContact")}
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              { color: colors.text, borderColor: colors.border },
-            ]}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholder={i18n.t("phoneContact")}
-            placeholderTextColor="rgba(148,163,184,0.9)"
-          />
-
-          <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {i18n.t("favoriteService")}
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              { color: colors.text, borderColor: colors.border },
-            ]}
-            value={favoriteService}
-            onChangeText={setFavoriteService}
-            placeholder={i18n.t("favoriteService")}
-            placeholderTextColor="rgba(148,163,184,0.9)"
-          />
-
-          <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {i18n.t("notes")}
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              styles.textArea,
-              { color: colors.text, borderColor: colors.border },
-            ]}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder={i18n.t("notes")}
-            placeholderTextColor="rgba(148,163,184,0.9)"
-            multiline
-          />
-
-          <CustomButton
-            title={i18n.t("saveProfile")}
-            onPress={() => {
-              if (!clientName || !phone || !favoriteService) {
-                Alert.alert(
-                  i18n.t("profileIncompleteTitle"),
-                  i18n.t("profileIncompleteBody")
-                );
-                return;
-              }
-              dispatch(
-                setClientProfile({
-                  name: clientName,
-                  phone,
-                  favoriteService,
-                  notes,
-                })
-              );
-              Alert.alert(i18n.t("profileSaved"));
-            }}
-            variant="primary"
-          />
+          <View style={styles.exchangeRow}>
+            <Text style={[styles.label, { color: colors.text }]}>HNL</Text>
+            <CustomInput
+              value={hnlAmount}
+              onChange={handleHnlChange}
+              type="number"
+              placeholder="0.00"
+            />
+          </View>
         </View>
-
         <CustomButton
           title={i18n.t("backToPanel")}
           onPress={() => navigation.navigate("Home")} // Regreso a HomeScreen (Stack)
@@ -249,6 +200,33 @@ const styles = StyleSheet.create({
   advancedSection: {
     marginTop: 20,
     gap: 10,
+  },
+  exchangeCard: {
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  rateText: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 12,
+  },
+  exchangeRow: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "500",
+    marginBottom: 4,
   },
   langButtons: {
     flexDirection: "row",
